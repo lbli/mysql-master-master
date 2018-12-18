@@ -1,0 +1,49 @@
+[mysql]
+10.1.204.109 server_id=1 master=10.1.204.109 slave=10.1.204.110 auto_increment_offset=1
+10.1.204.110 server_id=2 master=10.1.204.109 slave=10.1.204.110 auto_increment_offset=2
+
+[keepalived]
+10.1.204.109	master_ip=10.1.204.109 keepalived_ip=10.1.204.109 ip=10.1.204.109 state=MASTER
+10.1.204.110	master_ip=10.1.204.109 keepalived_ip=10.1.204.110 ip=10.1.204.110 state=BACKUP
+
+[all:vars]
+HOSTS_1="10.1.204.109 wenyan1"
+HOSTS_2="10.1.204.110 wenyan2"
+
+#mysql
+MYSQL_IP="10.1.204.109"
+MYSQL_PORT="3306"
+MYSQL_USER="root"
+MYSQL_PASS="Mysql123456"
+
+
+ANSIBLE_DIR="./bin"
+BASE_DIR="/usr/local"
+MYSQL_DIR="/data/mysql"
+
+#redis-passwd
+REDIS_PASS="!QAZ2wsx12"
+
+#mysql 安装用户和密码
+MY_USER="mysql"
+MY_PASS="Mysql123456"
+
+#MYSQL 主从同步用户
+MYSQL_SYSC="mysysc"
+MYSYSC_PASS="MysSysc1234"
+
+#soft_dir, ANSIBLE_DIR 是安装包路径 BASE_DIR 为软件安装路径
+ANSIBLE_DIR="./bin"
+BASE_DIR="/usr/local"
+MYSQL_DIR="/data/mysql"
+
+#redis-passwd
+REDIS_PASS="!QAZ2wsx12"
+
+#mysql 安装用户和密码
+MY_USER="mysql"
+MY_PASS="Mysql123456"
+
+#MYSQL 主从同步用户
+MYSQL_SYSC="mysysc"
+MYSYSC_PASS="MysSysc1234"

@@ -1,0 +1,25 @@
+---
+- name: copy keeplived  file
+  copy: src=keepalived/etc/sysconfig/keepalived dest=/etc/sysconfig/keepalived owner=root group=root
+
+- name: create dir keepalived
+  shell: mkdir -p /etc/keepalived 
+
+- name: copy keeplived config file
+  template: src=keepalived.conf.j2  dest=/etc/keepalived/keepalived.conf
+#  notify: restart keepalived
+
+- name: copy keeplived bin file
+  copy: src=keepalived/sbin/keepalived dest=/usr/sbin/keepalived owner=root group=root mode=755
+
+- name: copy keeplived init config file
+  copy: src=keepalived/etc/init.d/keepalived dest=/etc/init.d/keepalived owner=root group=root mode=755
+
+- name: cope nginx monitor pid
+  copy: src=keepalived/nginx_check.sh dest=/usr/local/nginx_check.sh
+
+- name: reload daemon
+  shell: systemctl daemon-reload
+
+- name: make sure keepalived started
+  service: name=keepalived state=started

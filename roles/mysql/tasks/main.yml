@@ -1,0 +1,107 @@
+- name: unarchive mysql binary file
+  unarchive: src={{ ANSIBLE_DIR }}/mysql-5.7.24-linux-glibc2.12-x86_64.tar.gz dest={{ BASE_DIR }}/
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: soft link
+  file: src={{ BASE_DIR }}/mysql-5.7.24-linux-glibc2.12-x86_64 dest={{ BASE_DIR }}/mysql state=link
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: mkdir mysql-data
+  shell: mkdir -p {{ MYSQL_DIR }}
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: mkdir mysql-logs
+  shell: mkdir -p {{ BASE_DIR }}/mysql/logs
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: touch mariadb.log
+  shell: /usr/bin/touch {{ BASE_DIR }}/mysql/logs/mysql.log
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: create mysql user
+  user: name={{ MY_USER }} password={{ MY_PASS }}
+
+- name: chown mysql-data mysql
+  shell: chown -R {{ MY_USER }}:{{ MY_USER }} {{ MYSQL_DIR }}
+
+- name: chown basedir
+  shell: chown -R {{ MY_USER }}:{{ MY_USER }} {{ BASE_DIR }}/mysql-5.7.24-linux-glibc2.12-x86_64
+
+- name: set /etc/profile
+  shell: /bin/echo {{ item }} >> /etc/profile && source /etc/profile
+  with_items:
+    - export MYSQL_HOME={{ BASE_DIR }}/mysql
+    - export PATH=\$MYSQL_HOME/bin:\$PATH
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: set /etc/bashrc
+  shell: /bin/echo {{ item }} >> /etc/bashrc && source /etc/bashrc
+  with_items:
+    - export MYSQL_HOME={{ BASE_DIR }}/mysql
+    - export PATH=\$MYSQL_HOME/bin:\$PATH
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: set mysql .bash_profile
+  shell: su - {{ MY_USER }} -c " /bin/echo {{ item }} >> ~/.bash_profile && source ~/.bash_profile"
+  with_items:
+    - export MYSQL_HOME={{ BASE_DIR }}/mysql
+    - export PATH=\$MYSQL_HOME/bin:\$PATH
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: set root .bash_profile
+  shell: /bin/echo {{ item }} >> ~/.bash_profile && source ~/.bash_profile
+  with_items:
+    - export MYSQL_HOME={{ BASE_DIR }}/mysql
+    - export PATH=\$MYSQL_HOME/bin:\$PATH
+  when: ansible_env.MYSQL_HOME is not defined
+
+- name: initialize mysql
+  shell: "{{ BASE_DIR }}/mysql/bin/mysqld --initialize-insecure --user={{ MY_USER }} --basedir={{ BASE_DIR }}/mysql --datadir={{ MYSQL_DIR }}"
+- name: cp my.cnf
+  template: src=my.cnf dest=/etc/my.cnf
+- name: start mysql
+  shell: "{{ BASE_DIR }}/mysql/support-files/mysql.server start"
+
+- name: copy master.sh to master
+  template: src=master.sh dest={{ BASE_DIR }}/mysql/master.sh
+  when: server_id == 1
+
+- name: shell master.sh to master
+  shell: sh {{ BASE_DIR }}/mysql/master.sh
+  when: server_id == 1
+
+- name: select master binlog name
+  shell: /usr/local/mysql/bin/mysql -h{{master}} -uroot -p{{MYSQL_PASS}} -e "show master status"|grep bin |awk '{print $1}'
+  register: File
+  when: server_id == 2
+
+- name: select master  Position
+  shell: /usr/local/mysql/bin/mysql -h{{master}} -uroot -p{{MYSQL_PASS}} -e "show master status" |grep bin |awk '{print $2}'
+  register: Position
+  when: server_id == 2
+
+- name: copy slave.sh to slave
+  template: src=slave.sh dest={{ BASE_DIR }}/mysql/slave.sh
+  when: server_id == 2
+
+- name: shell slave.sh to slave
+  shell: sh {{ BASE_DIR }}/mysql/slave.sh
+  when: server_id == 2
+
+- name: select slave binlog name
+  shell: /usr/local/mysql/bin/mysql -h{{slave}} -uroot -p{{MYSQL_PASS}} -e "show master status"|grep bin |awk '{print $1}'
+  register: File1
+  when: server_id == 1
+
+- name: select slave Position
+  shell: /usr/local/mysql/bin/mysql -h{{slave}} -uroot -p{{MYSQL_PASS}} -e "show master status" |grep bin |awk '{print $2}'
+  register: Position1
+  when: server_id == 1
+
+- name: copy master-s.sh to master
+  template: src=master-s.sh dest={{ BASE_DIR }}/mysql/master-s.sh
+  when: server_id == 1
+
+- name: shell master.sh to master
+  shell: sh {{ BASE_DIR }}/mysql/master-s.sh
+  when: server_id == 1
