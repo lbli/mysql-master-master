@@ -10,6 +10,10 @@
 HOSTS_1="10.1.204.109 wenyan1"
 HOSTS_2="10.1.204.110 wenyan2"
 
+###keepalived vip && network
+eth=ens3
+vip=10.1.204.251
+
 #mysql
 MYSQL_IP="10.1.204.109"
 MYSQL_PORT="3306"
